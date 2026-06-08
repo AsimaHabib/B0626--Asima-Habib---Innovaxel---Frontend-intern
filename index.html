@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spendwise — Personal Expense Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-title">Spendwise</div>
+    <div class="logo-sub">Expense Tracker</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Menu</div>
+    <button class="nav-item active" onclick="switchView('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="nav-item" onclick="switchView('expenses')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg>
+      <span>All Expenses</span>
+    </button>
+    <button class="nav-item" onclick="switchView('analytics')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Analytics</span>
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="total-pill">
+      <div class="total-pill-label">Total Spent</div>
+      <div class="total-pill-amount" id="sidebar-total">$0</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <h1 class="page-title" id="page-title">Dashboard</h1>
+    <div class="topbar-actions">
+      <button class="btn btn-primary" onclick="openModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Expense
+      </button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- DASHBOARD VIEW -->
+    <div class="view active" id="view-dashboard">
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">Spending by Category</div>
+          <div style="position:relative;height:200px;"><canvas id="pieChart" role="img" aria-label="Pie chart showing spending by category">Spending by category breakdown.</canvas></div>
+          <div class="chart-legend" id="pie-legend"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Monthly Trend</div>
+          <div style="position:relative;height:200px;"><canvas id="barChart" role="img" aria-label="Bar chart showing monthly spending trend">Monthly spending trend.</canvas></div>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;"><h2 style="font-family:var(--font-serif);font-size:18px;color:var(--text);">Recent Expenses</h2></div>
+      <div class="expenses-wrap" id="recent-expenses-wrap"></div>
+    </div>
+
+    <!-- EXPENSES VIEW -->
+    <div class="view" id="view-expenses">
+      <div class="filters-bar">
+        <input type="text" class="filter-input" id="search-input" placeholder="Search expenses..." oninput="renderExpenses()" style="width:200px;">
+        <select class="filter-input" id="filter-cat" onchange="renderExpenses()">
+          <option value="">All Categories</option>
+        </select>
+        <input type="date" class="filter-input" id="filter-from" onchange="renderExpenses()">
+        <span class="filter-label">to</span>
+        <input type="date" class="filter-input" id="filter-to" onchange="renderExpenses()">
+        <button class="btn btn-ghost" onclick="clearFilters()">Clear</button>
+      </div>
+      <div class="expenses-wrap">
+        <table class="expenses-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th style="width:80px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="expenses-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ANALYTICS VIEW -->
+    <div class="view" id="view-analytics">
+      <div class="stats-grid" id="analytics-stats"></div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">Category Breakdown</div>
+          <div style="position:relative;height:260px;"><canvas id="barCatChart" role="img" aria-label="Horizontal bar chart showing spending per category">Category spending breakdown.</canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Spending Distribution</div>
+          <div style="position:relative;height:260px;"><canvas id="doughnutChart" role="img" aria-label="Doughnut chart of spending distribution">Spending distribution.</canvas></div>
+          <div class="chart-legend" id="doughnut-legend"></div>
+        </div>
+      </div>
+      <div class="cat-summary" id="cat-summary-table"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="handleBackdropClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Add Expense</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="grid-column: 1/-1;">
+          <label class="form-label">Title *</label>
+          <input type="text" class="form-input" id="f-title" placeholder="e.g. Dinner with friends">
+          <div class="error-msg" id="err-title">Title is required.</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Amount *</label>
+          <input type="number" class="form-input" id="f-amount" placeholder="0.00" min="0.01" step="0.01">
+          <div class="error-msg" id="err-amount">Enter a valid positive amount.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select class="form-input" id="f-category">
+            <option value="">Select category</option>
+            <option>Food & Dining</option>
+            <option>Transport</option>
+            <option>Utilities</option>
+            <option>Shopping</option>
+            <option>Entertainment</option>
+            <option>Health</option>
+            <option>Travel</option>
+            <option>Other</option>
+          </select>
+          <div class="error-msg" id="err-category">Please select a category.</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date *</label>
+          <input type="date" class="form-input" id="f-date">
+          <div class="error-msg" id="err-date">Date is required.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
+          <input type="text" class="form-input" id="f-notes" placeholder="Any details...">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveExpense()">Save Expense</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
